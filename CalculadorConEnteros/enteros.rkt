@@ -1,0 +1,722 @@
+;PRACTICA 3 DE CONOCIMIENTO Y RAZONAMIENTO AUTOMATIZADO
+;Realizada por:
+;   Daniel Lopez Moreno DNI: 03217279Q
+;   Alvaro de las Heras Fernandez DNI: 032146833L
+;   Samuel Garcia Gonzalez DNI: 09085497Z
+
+
+; Booleanos. Son los únicos lambda términos no currificados.
+
+(define true (lambda (x y) x))
+
+(define false (lambda (x y) y))
+
+(define neg (lambda (x) (x false true)))
+                         
+(define and (lambda (x y) (x y false)))
+
+(define or (lambda (x y) (x true y)))
+
+; Pares ordenados
+              
+(define par (lambda (x)
+              (lambda (y)
+                (lambda (f) (f x y)))))
+
+(define primero (lambda (p) (p true)))
+
+(define segundo (lambda (p) (p false)))
+
+;;;;; Combinador de punto fijo
+
+(define Y
+  (lambda (f)
+    ((lambda (x) (f (lambda (v) ((x x) v))))
+     (lambda (x) (f (lambda (v) ((x x) v)))))))
+
+;;;;;; Orden en naturales y test de nulidad
+
+(define esmenoroigualnat (lambda (n)
+                             (lambda (m)
+                                (escero ((restanat n) m)))))
+                         
+(define esmayoroigualnat (lambda (n)
+                            (lambda (m)
+                               (escero ((restanat m) n)))))
+                         
+(define esmenornat (lambda (n)
+                     (lambda (m)
+                       (and ((esmenoroigualnat n) m) (noescero ((restanat m) n))))))
+
+(define esmayornat (lambda (n)
+                     (lambda (m)
+                       (and ((esmayoroigualnat n) m) (noescero ((restanat n) m))))))
+
+(define esigualnat (lambda (n)
+                     (lambda (m)
+                       (and ((esmayoroigualnat n) m) ((esmenoroigualnat n) m)))))
+
+(define escero (lambda (n)
+                 ((n (lambda (x) false)) true)))
+
+(define noescero (lambda (n)
+                    (neg (escero n))))
+
+; Aritmética natural. Se define también "comprobar" para poder hacer pruebas. Se definen algunos naturales para hacer comprobaciones. Se escriben en francés para distinguirlos de los enteros 
+; que se escribirán en español.
+
+(define zero (lambda (f)
+               (lambda (x) x)))
+
+(define sucesor (lambda (n)
+                  (lambda (f)
+                    (lambda (x)
+                     (f((n f) x))))))
+
+(define un (sucesor zero))
+
+(define deux (sucesor un))
+
+(define trois (sucesor deux))
+
+(define quatre (sucesor trois))
+
+(define cinq (sucesor quatre))
+
+(define six (sucesor cinq))
+
+(define sept (sucesor six))
+
+(define huit (sucesor sept))
+
+(define neuf (sucesor huit))
+
+(define dix (sucesor neuf))
+
+(define onze (sucesor dix))
+
+(define douze (sucesor onze))
+
+(define treize (sucesor douze))
+
+(define quatorze (sucesor treize))
+
+(define quinze (sucesor quatorze))
+
+(define seize (sucesor quinze))
+
+(define dix-sept (sucesor seize))
+
+(define dix-huit (sucesor dix-sept))
+
+(define dix-neuf (sucesor dix-huit))
+
+(define vingt (sucesor dix-neuf))
+
+;; Comprobar
+
+(define comprobar (lambda (n)
+                    ((n (lambda (x) (+ 1 x))) 0)))
+
+;; Suma naturales
+
+(define sumnat (lambda (n)
+                 (lambda (m)
+                   ((n (lambda (x) (sucesor x))) m))))
+
+;; Producto naturales
+
+(define prodnat (lambda (n)
+                   (lambda (m)
+                     (lambda (f)
+                       (lambda (x) ((m (n f)) x))))))
+                     
+(define prefn (lambda (f)
+                (lambda (p)
+                  ((par (f (primero p))) (primero p)))))
+
+;; Predecesor y resta 
+
+(define predecesor (lambda (n)
+                     (lambda (f)
+                       (lambda (x)
+                            (segundo ((n ((lambda (g)
+                                             (lambda (p) ((prefn g) p))) f)) ((par x) x)))))))
+                         
+(define restanat (lambda (n)
+                     (lambda (m)
+                        ((m (lambda (x) (predecesor x))) n))))                                                 
+
+;; Resto de la división euclídea. Si el divisor es cero, devuelve false.
+
+(define restonataux
+    (lambda (n)
+        (lambda (m)
+            ((Y (lambda (f)
+                 (lambda (x)
+                    ((((esmayoroigualnat x) m)  
+                        (lambda (no_use)
+                            (f ((restanat x) m))
+                        )
+                        (lambda (no_use)
+                            x
+                        )
+                    )
+                        zero)    ; Pasa zero como argumento de no_use
+                )
+            ))
+                n)  ; Pasa n como el valor inicial de x.
+        )
+))
+
+(define restonat (lambda (n)
+                      (lambda (m)
+                        (((escero m) (lambda (no_use) false) (lambda (no_use) ((restonataux n) m))) zero))))
+
+;; Cociente de la división euclídea. Al igual que el resto, devuelve false si se divide por cero.
+
+(define cocientenataux
+    (lambda (n)
+        (lambda (m)
+            ((Y (lambda (f)
+                (lambda (x)
+                    ((((esmayoroigualnat x) m)  
+                        (lambda (no_use)
+                            (sucesor (f ((restanat x) m)))  
+                        )
+                        (lambda (no_use)
+                            zero
+                        )
+                    )
+                        zero)    ; Pasa zero como argumento de no_use
+                )
+            ))
+                n)  ; Pasa n como el valor inicial de x.
+        )
+    )
+)
+
+(define cocientenat (lambda (n)
+                      (lambda (m)
+                        (((escero m) (lambda (no_use) false) (lambda (no_use) ((cocientenataux n) m))) zero))))
+
+;; Máximo común denominador.
+
+(define mcdnat
+    (lambda (n)
+        (lambda (m)
+            (((Y (lambda (f)
+                   (lambda (x)
+                     (lambda(y)
+                      (((escero y)  
+                       (lambda (no_use)
+                            x
+                        ) 
+                       (lambda (no_use)
+                            ((f y)((restonat x) y)) 
+                        )
+                        
+                    )
+                        zero)    ; Pasa zero como argumento de no_use
+                ))
+            ))
+                n) ; Pasa n como el valor inicial de x.
+          m)       ; Pasa m como el valor inicial de y.
+    )
+))
+
+;;;; Paridad
+
+(define par? (lambda (n)
+               (escero ((restonat n) deux))))
+
+(define cuadrado (lambda (n)
+                   ((prodnat n) n)))
+
+
+;;;;; Potencias de naturales usando algo binario.
+
+(define potencianat
+    (lambda (n)
+        (lambda (m)
+            ((Y (lambda (f)
+                (lambda (y)
+                    (((escero y)
+                        (lambda (no_use)
+                            un
+                        )
+                        (lambda (no_use)
+                          (((par? y)
+                           (lambda (no_use1)
+                             (cuadrado (f ((cocientenat y) deux))))
+                           (lambda (no_use1)
+                             ((prodnat n) (f (predecesor y))))) zero)
+                        )
+                    )
+                        zero)    ; Pasa zero como argumento de no_use
+                )
+            ))
+                m)  ; Pasa n como el valor inicial de x.
+        )
+    )
+)
+
+;;;;;; Definición de algunos enteros. Se codifican los enteros mediante pares de naturales: el par (m,n) es una representación de m-n. Es obvio que varios
+;;;;;; pares codifican el mismo entero. Por ejemplo, (7,5)=(9,7). Por lo tanto, los enteros se definen como el conjunto cociente de NxN mediante la relación 
+;;;;;; de equivalencia R dada por
+;;;;;;
+;;;;;;                     (m,n) R (m',n') si y solo si m-n=m'-n'
+
+(define cero ((par zero) zero))
+
+(define -uno ((par zero) un))
+
+(define -dos ((par zero) deux))
+
+(define -tres ((par zero) trois))
+
+(define -cuatro ((par zero) quatre))
+
+(define -cinco ((par zero) cinq))
+
+(define -seis ((par zero) six))
+
+(define -siete ((par zero) sept))
+
+(define -ocho ((par zero) huit))
+
+(define -nueve ((par zero) neuf))
+
+(define -diez ((par zero) dix))
+
+(define -once ((par zero) onze))
+
+(define -doce ((par zero) douze))
+
+(define -trece ((par zero) treize))
+
+(define -catorce ((par zero) quatorze))
+
+(define -quince ((par zero) quinze))
+
+(define -dieciseis ((par zero) seize))
+
+(define -diecisiete ((par zero) dix-sept))
+
+(define -dieciocho ((par zero) dix-huit))
+
+(define -diecinueve ((par zero) dix-neuf))
+
+(define -veinte ((par zero) vingt))
+
+(define uno ((par un) zero))
+
+(define dos ((par deux) zero))
+
+(define tres ((par trois) zero))
+
+(define cuatro ((par quatre) zero))
+
+(define cinco ((par cinq) zero))
+
+(define seis ((par six) zero))
+
+(define siete ((par sept) zero))
+
+(define ocho ((par huit) zero))
+
+(define nueve ((par neuf) zero))
+
+(define diez ((par dix) zero))
+
+(define once ((par onze) zero))
+
+(define doce ((par douze) zero))
+
+(define trece ((par treize) zero))
+
+(define catorce ((par quatorze) zero))
+
+(define quince ((par quinze) zero))
+
+(define dieciseis ((par seize) zero))
+
+(define diecisiete ((par dix-sept) zero))
+
+(define dieciocho ((par dix-huit) zero))
+
+(define diecinueve ((par dix-neuf) zero))
+
+(define veinte ((par vingt) zero))
+
+;;;;; Orden, valor absoluto y tests de nulidad, positividad y negatividad. 
+;;;
+;;; m-n > m'-n' si y solo si m+n' > m'+n e igual con el resto
+
+(define esmayoroigualent (lambda (r)
+                           (lambda (s)
+                             ((esmayoroigualnat ((sumnat (primero r)) (segundo s))) ((sumnat (primero s)) (segundo r)))))) 
+
+(define esmenoroigualent (lambda (r)
+                           (lambda (s)
+                             ((esmenoroigualnat ((sumnat (primero r)) (segundo s))) ((sumnat (primero s)) (segundo r))))))
+
+(define esmayorent (lambda (r)
+                           (lambda (s)
+                             ((esmayornat ((sumnat (primero r)) (segundo s))) ((sumnat (primero s)) (segundo r))))))
+
+(define esmenorent (lambda (r)
+                           (lambda (s)
+                             ((esmenornat ((sumnat (primero r)) (segundo s))) ((sumnat (primero s)) (segundo r))))))
+
+(define esigualent (lambda (r)
+                           (lambda (s)
+                             ((esigualnat ((sumnat (primero r)) (segundo s))) ((sumnat (primero s)) (segundo r))))))
+
+(define absoluto (lambda (r)
+                    (((esmayoroigualnat (primero r)) (segundo r)) ((par ((restanat (primero r)) (segundo r))) zero) ((par ((restanat (segundo r)) (primero r))) zero))))
+
+(define negativo (lambda (r)
+                   ((esmenorent r) cero)))
+
+(define positivo (lambda (r)
+                   ((esmayorent r) cero)))
+
+(define esceroent (lambda (r)
+                     ((esigualnat (primero r)) (segundo r))))
+                      
+(define noesceroent (lambda (r)
+                       (neg (esceroent r))))
+
+;;;;; Reducción a representante canónico de la clase de equivalencia.
+
+(define reducir (lambda (r)
+                  (((esmayoroigualnat (primero r)) (segundo r)) 
+                        ((par ((restanat (primero r)) (segundo r))) zero)
+                        ((par zero) ((restanat (segundo r)) (primero r))))))
+
+;;;;; Aritmética entera. La respuesta está siempre dada por el representante canónico de la clase de equivalencia. 
+
+(define testenteros (lambda (r)
+                      (- (comprobar (primero r)) (comprobar (segundo r)))))
+
+(define sument (lambda (r)
+                  (lambda (s)
+                    (reducir ((par ((sumnat (primero r)) (primero s))) ((sumnat (segundo r)) (segundo s)))))))
+
+(define prodent (lambda (r)
+                  (lambda (s)
+                    (reducir ((par ((sumnat ((prodnat (primero r)) (primero s))) ((prodnat (segundo r)) (segundo s))))
+                          ((sumnat ((prodnat (primero r)) (segundo s))) ((prodnat (segundo r)) (primero s))))))))                       
+
+(define restaent (lambda (r)
+                   (lambda (s)
+                     (reducir ((par ((sumnat (primero r)) (segundo s))) ((sumnat (segundo r)) (primero s)))))))
+
+(define opuesto (lambda (r)
+                  ((par (segundo r)) (primero r))))
+
+;; Lo siguiente reduce la división de enteros a división de naturales. Si m mayor o igual que 0 y n > 0, y si q y r son cociente y resto de la división de m entre n, se tiene
+;;  m  = q       * n        + r
+;;  m  = (-q)    * (-n)     + r
+;; -m  = (-(q+1))* n        + (n-r)
+;; -m  = (q+1)   * (-n)     + (n-r),
+;; siempre y cuando el resto no sea cero. Cuando el divisor es cero, la función cocienteent devuelve false.
+
+(define cocienteent_aux (lambda (r)
+                          (lambda (s)
+                            ((cocientenat (primero (absoluto r))) (primero (absoluto s))))))
+
+; Caso1: resto cero. Si m= q*n, entonces -m= (-q)*n, -m = q* (-n) y m= (-q)*(-n).
+
+(define cocienteentaux-caso1 (lambda (r)
+                               (lambda (s)
+                                  ((or (and ((esmayoroigualent r) cero) (positivo s)) (and (negativo r) (negativo s))) ((par ((cocientenat (primero (absoluto r))) (primero (absoluto s)))) zero)
+                                                                                                                       ((par zero) ((cocientenat (primero (absoluto r))) (primero (absoluto s))))))))
+                              
+; Caso 2: resto no nulo
+
+(define cocienteentaux-caso2 (lambda (r)
+                                (lambda (s)
+                                    (((esmayoroigualent r) cero) ((positivo s) ((par ((cocienteent_aux r) s)) zero) ((par zero) ((cocienteent_aux r) s)))
+                                                                 ((positivo s) ((par zero) (sucesor ((cocienteent_aux r) s))) ((par (sucesor ((cocienteent_aux r) s))) zero))))))
+; Cociente cuando no hay división por cero
+
+(define cocienteentaux (lambda (r)
+                         (lambda (s)
+                           ((escero ((restonat (primero (absoluto r))) (primero (absoluto s)))) ((cocienteentaux-caso1 r) s) ((cocienteentaux-caso2 r) s)))))
+
+; Cociente considerando la división por cero
+
+(define cocienteent (lambda (r)
+                      (lambda (s)
+                        (((esceroent s) (lambda (no_use) false) (lambda (no_use) ((cocienteentaux r) s))) zero))))
+
+; Resto. Si se divide por cero, devuelve false
+
+(define restoentaux1 (lambda (r)
+                        (lambda (s)
+                          ((or (and ((esmayoroigualent r) cero) (positivo s)) (and ((esmayoroigualent r) cero) (negativo s))) ((par ((restonat (primero (absoluto r))) (primero (absoluto s)))) zero)
+                                                                                                           ((par ((restanat (primero (absoluto s)))((restonat (primero (absoluto r))) (primero (absoluto s))))) zero)))))
+
+(define restoentaux (lambda (r)
+                       (lambda (s)
+                          ((escero ((restonat (primero (absoluto r))) (primero (absoluto s)))) cero ((restoentaux1 r) s)))))
+
+(define restoent (lambda (r)
+                      (lambda (s)
+                        (((esceroent s) (lambda (no_use) false) (lambda (no_use) ((restoentaux r) s))) zero))))
+
+;; Como mcd (r,s)=mcd(|r|,|s|), se tiene
+
+(define mcdent (lambda (r)
+                 (lambda (s)
+                   ((par ((mcdnat (primero (absoluto r))) (primero (absoluto s)))) zero))))
+
+;; Mínimo común múltiplo
+
+(define mcment (lambda (r)
+                 (lambda (s)
+                   ((cocienteent ((prodent r) s)) ((mcdent r) s)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;---------------------------ENTEROS---------------------------
+
+;Reduccion a representante canonico, modulo p
+(define reduccion (lambda (r)
+                    (lambda (s) ((restoent r) s))))
+
+;Saber si es cero un numero modulo m
+(define escero_p (lambda (r)
+                   (lambda (p)
+                     ((esceroent ((reduccion r)p)) true false))))
+
+;Suma modulo p
+(define suma_p (lambda (r)
+                     (lambda (s)
+                       (lambda (t) ((reduccion ((sument r)s)) t)))))
+
+;Producto modulo p
+(define prod_p (lambda (r)
+                     (lambda (s)
+                       (lambda (t) ((reduccion ((prodent r)s)) t)))))
+
+;Resta modulo p
+(define resta_p (lambda (r)
+                     (lambda (s)
+                       (lambda (t) ((reduccion ((restaent r)s)) t)))))
+
+;Decision sobre inversibilidad de un numero modulo p
+(define inverso?_p (lambda (r)
+                     (lambda (p)
+                       (((esigualent((mcdent r)p))uno) true false))))
+
+;Calculo del inverso de un numero modulo p
+(define inverso_p
+    (lambda (n)
+        (lambda (p)
+            ((Y (lambda (f)
+                (lambda (y)
+                    (((neg((esigualent((mcdent n)p))uno))
+                        ;Si no se puede invertir devolvemos 0
+                        (lambda (no_use)
+                            cero
+                        )
+                        ;Si se puede invertir, hacemos iteraciones hasta que el valor sea 1
+                        ;entonces devolvemos el valor de la iteración
+                        (lambda (no_use)
+                          ((((esigualent (((prod_p y) n) p))uno)
+                           (lambda (no_use1)
+                             y)
+                           (lambda (no_use1)
+                             (f ((sument y) uno)))) cero)
+                        )
+                    )
+                        cero)    ; Pasa zero como argumento de no_use
+                )
+            ))
+                zero)  ; Pasa n como el valor inicial de x.
+        )
+    )
+)
+
+;---------------------------MATRICES---------------------------
+
+;Funciones inicializacion
+(define testmatrices (lambda (m)
+                        (list (list (testenteros (primero (primero m))) (testenteros (segundo (primero m))))
+                              (list (testenteros (primero (segundo m))) (testenteros (segundo (segundo m))))
+                        )
+                      )
+)
+(define testvector (lambda (m)
+                     (list (testenteros (primero m)) (testenteros (segundo m))))
+)
+
+
+(define matriz (lambda (a)
+                         (lambda (b)
+                           (lambda (c)
+                             (lambda (d)
+                               ((par ((par a) b)) ((par c) d)))))))
+
+
+;Matrices de prueba
+(define identidad ((((matriz uno) cero) cero) uno))
+
+(define matriz_nula ((((matriz cero) cero) cero) cero))
+
+(define matriz_prueba1 ((((matriz dos) cuatro) -uno) cinco))
+
+(define matriz_prueba2 ((((matriz uno) dos) dos) tres))
+
+(define matriz_prueba3 ((((matriz dos) uno) -tres) dos))
+
+(define matriz_prueba4 ((((matriz uno) -tres) cero) cuatro))
+
+(define vector_prueba1 ((par dos)tres))
+
+;Suma de matrices modulo p
+(define suma_matrices (lambda (m)
+                           (lambda (m2)
+                             (lambda (p)
+                               ((((matriz 
+                               (((suma_p (primero (primero m))) (primero (primero m2))) p))
+                               (((suma_p (segundo (primero m))) (segundo (primero m2))) p))
+                               (((suma_p (primero (segundo m))) (primero (segundo m2))) p))
+                               (((suma_p (segundo (segundo m))) (segundo (segundo m2))) p))))))
+
+;Resta de matrices modulo p
+(define resta_matrices (lambda (m)
+                           (lambda (m2)
+                             (lambda (p)
+                               ((((matriz 
+                               (((resta_p (primero (primero m))) (primero (primero m2))) p))
+                               (((resta_p (segundo (primero m))) (segundo (primero m2))) p))
+                               (((resta_p (primero (segundo m))) (primero (segundo m2))) p))
+                               (((resta_p (segundo (segundo m))) (segundo (segundo m2))) p))))))
+
+
+;--------PRODUCTOS-------
+;Producto escalar
+(define prod_escalar (lambda (m)
+                           (lambda (esc)
+                             (lambda (p)
+                               ((((matriz 
+                               (((prod_p (primero (primero m))) esc) p))
+                               (((prod_p (segundo (primero m))) esc) p))
+                               (((prod_p (primero (segundo m))) esc) p))
+                               (((prod_p (segundo (segundo m))) esc) p))))))
+;Productor por vector
+(define prod_vector (lambda (m)
+                           (lambda (vec)
+                             (lambda (p)
+                               ((par (((suma_p (((prod_p (primero (primero m))) (primero vec)) p))
+                                       (((prod_p (primero (segundo m))) (segundo vec)) p))p))
+                                (((suma_p (((prod_p (segundo (primero m))) (primero vec)) p))
+                                       (((prod_p (segundo (segundo m))) (segundo vec)) p))p))))))
+
+;Producto por matriz
+(define prod_matrices (lambda (m)
+                           (lambda (m2)
+                             (lambda (p)
+                               ((par (((prod_vector m)(primero m2)) p))
+                                (((prod_vector m)(segundo m2)) p))))))
+
+;--------DETERMINANTE-------
+;Determinante de la matriz modulo p
+(define determinante_p (lambda (m)
+                           (lambda (p)
+                             (((resta_p (((prod_p (primero (primero m))) (segundo (segundo m))) p))(((prod_p (segundo (primero m))) (primero (segundo m))) p))p))))
+
+;-------RANGO---------
+;Rango de una matriz
+(define rango_p (lambda (m)
+                  (lambda (p)
+                    (((comprobar_ceros m)p) cero ((rangos_pos m)p)))))
+
+;Comprobar si son todo 0
+(define comprobar_ceros (lambda (m)
+                          (lambda (p)
+                            ((esceroent ((reduccion (primero (primero m))) p))
+                             ((esceroent ((reduccion (segundo (primero m))) p))
+                              ((esceroent ((reduccion (primero (segundo m))) p))
+                               ((esceroent ((reduccion (segundo (segundo m))) p)) true false) false) false) false))))
+
+;Calcular si el rango es 1 o 2 dependiendo del determinante de la matriz
+(define rangos_pos (lambda (m)
+                     (lambda (p)
+                       ((esceroent ((determinante_p m)p)) uno dos))))
+
+
+;----------INVERSIBILIDAD-------
+;Decision sobre inversibilidad de una matriz dependiendo de si el determinante es 0
+(define inversa?_p (lambda (m)
+                     (lambda (p)
+                       ((esceroent ((determinante_p m)p)) false true))))
+
+;Calculo de la inversa de una matriz usando la inversa auxiliar, si no tiene inversa devolvemos la matriz nula
+(define inversa (lambda (m)
+                  (lambda (p)
+                    ((esceroent ((determinante_p m)p)) matriz_nula ((inversa_aux m)p)))))
+
+;Multiplicamos el inverso del determinante por la matriz transformada 
+(define inversa_aux (lambda (m)
+                      (lambda (p)
+                        (((prod_escalar ((trans_matriz m)p)) ((inverso_p ((determinante_p m)p)) p) )p))))
+
+;Transformar la matriz de modo ((a b)(c d)) a modo ((a -c) (-b d))
+(define trans_matriz (lambda (m)
+                       (lambda (p)
+                         ((((matriz
+                             ((reduccion (segundo (segundo m))) p))
+                             (((resta_p cero) (segundo (primero m))) p))
+                             (((resta_p cero) (primero (segundo m))) p))
+                             ((reduccion (primero (primero m))) p)))))
+
+;---------POTENCIAS DE MATRICES---------
+;Cuadrado de una matriz de modulo p
+(define cuadrado_matrices (lambda (m)
+                          (lambda (p)
+                            (((prod_matrices m) m) p))))
+
+;Potencias de naturales usando algoritmo binario.
+(define potencia_matrices_binario
+  ;Recibe tres parametros: matriz, exponente y modulo
+    (lambda (m)
+        (lambda (n)
+          (lambda (p)
+            ;Se le pasa el exponente como recursividad
+            ((Y (lambda (f)
+                (lambda (y)
+                  ;Si el exponente es cero, devuelve la matriz identidad
+                    (((esceroent y)
+                        (lambda (no_use)
+                            identidad
+                        )
+                        ;Si no es cero
+                        (lambda (no_use)
+                          ;Se comprueba si es un entero par
+                          (((esceroent ((restoent y)dos))
+                            ;Si es par se aplica el cuadrado y se llama de forma
+                            ;recursiva con la mitad del exponente
+                           (lambda (no_use1)
+                              ((cuadrado_matrices (f ((cocienteent y) dos))) p))
+                           ;Si es impar se realiza el producto de la matriz por el valor de exponente menos uno
+                           (lambda (no_use1)
+                             (((prod_matrices m)(f ((restaent y) uno)))p))) cero)
+                        )
+                    )
+                        cero)    ; Pasa cero como argumento de no_use
+                )
+            ))
+                n)  ; Pasa n como el valor inicial de y.
+        ))
+   )
+)
+
+
+
+
