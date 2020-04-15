@@ -1,0 +1,269 @@
+% Autor:  Daniel Lopez Moreno 03217279Q
+%         Alvaro de las Heras Fernandez 03146833L
+%         Samuel Garcia Gonzalez 09085497Z
+% Fecha: 21/02/2019
+
+:- consult('MarvelBBDD.pl').
+
+
+%Main
+jugar:-presentacion,
+       lista('personajes',L),
+       preguntas(L,Aux,['personajes'],DatosNuevoOut),
+       adivinacion(Aux,DatosNuevoOut).
+
+%Presentacion
+presentacion:-write('                                          ""\n'),
+              write('                                         "P/$"\n'),
+              write('                                        "4$$"\n'),
+              write('                                       "ee$$ee"\n'),
+              write('                                    "eF3??????$C$r.        .d$$$$$$$$$$$e"\n'),
+              write(' "zeez$$$$$be..                    JP3F$5''$5K$''?K?Je$.     d$$$FCLze.CC?$$$"\n'),
+              write('     """??$$$$$$$$ee..         .e$$$e$CC$???$$CC3e$$$$.  $$$/$$$$$$$$$.$$$"\n'),
+              write('             "?$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$b $$$$$$$P?CCe$$$$$"\n'),
+              write('                 "?$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$b$$J?bd$$$$$$$$$F"\n'),
+              write('                     "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$d$$F"\n'),
+              write('                        "?$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$".."\n'),
+              write('                            "?$$$$$$$$$$$$$$$$$$$$$$$$$F $$$"$$$$"\n'),
+              write('                                "?$$$$$$$$$$$$$$$$$$$F     ?$$$$$"\n'),
+              write('                                     "?????????C"\n'),
+              write('                                     "$$$$$$$$$$$$"\n'),
+              write('                                   "$b CC$????$$F3e"\n'),
+              write('                                 "$bC/%$bdd$b@$Pd??Jbb"\n'),
+              write('                                   ""?$$$$eeee$$$$F?"\n'),
+              write('    _    _   _           _                _       __  __                  _ \n'),
+              write('   /_\\  | |_(_)_ _  __ _| |_ ___ _ _   __| |___  |  \\/  |__ _ _ ___ _____| |\n'),
+              write('  / _ \\ | / / |   \\/ _` |  _/ _ \\  _| / _` / -_) | |\\/| / _` |  _\\ V / -_) |\n'),
+              write(' /_/ \\_\\|_\\_\\_|_||_\\__,_|\\__\\___/_|   \\__,_\\___| |_|  |_\\__,_|_|  \\_/\\___|_|\n'),
+              write('===========================================================================\n'),
+              write('                   ¡Bienvenido a Akinator de Marvel!\n'),
+              write('         ¿Por qué no piensas un personaje y yo lo intento adivinar?\n'),
+              write('===========================================================================\n\n').
+
+%Preguntas
+preguntas(L,Aux14,DatosNuevo,DatosNuevo14):-lineaTerrestre(L,Aux0,DatosNuevo,DatosNuevo0),
+              solucion(Aux0),
+              lineaFemenino(Aux0,Aux1,DatosNuevo0,DatosNuevo1),
+              solucion(Aux1),
+              lineaVerde(Aux1,Aux2,DatosNuevo1,DatosNuevo2),
+              solucion(Aux2),
+              lineaVengador(Aux2,Aux3,DatosNuevo2,DatosNuevo3),
+              solucion(Aux3),
+              lineaVillano(Aux3,Aux4,DatosNuevo3,DatosNuevo4),
+              solucion(Aux4),
+              lineaCapa(Aux4,Aux5,DatosNuevo4,DatosNuevo5),
+              solucion(Aux5),
+              lineaRojo(Aux5,Aux6,DatosNuevo5,DatosNuevo6),
+              solucion(Aux6),
+              lineaArmas(Aux6,Aux7,DatosNuevo6,DatosNuevo7),
+              solucion(Aux7),
+              lineaNegro(Aux7,Aux8,DatosNuevo7,DatosNuevo8),
+              solucion(Aux8),
+              lineaMutante(Aux8,Aux9,DatosNuevo8,DatosNuevo9),
+              solucion(Aux9),
+              lineaAnimal(Aux9,Aux10,DatosNuevo9,DatosNuevo10),
+              solucion(Aux10),
+              lineaCasco(Aux10,Aux11,DatosNuevo10,DatosNuevo11),
+              solucion(Aux11),
+              lineaCalvo(Aux11,Aux12,DatosNuevo11,DatosNuevo12),
+              solucion(Aux12),
+              lineaFantastico(Aux12,Aux13,DatosNuevo12,DatosNuevo13),
+              solucion(Aux13),
+              lineaGuardian(Aux13,Aux14,DatosNuevo13,DatosNuevo14),
+              solucion(Aux14).
+%Adivinacion
+adivinacion(Lista,DatosNuevo):-length(Lista,0)->write('No he podido adivinar tu personaje, introducelo (entre comillas):'),read(Nuevo),addPersonaje(Nuevo,DatosNuevo);
+                               write('No he podido adivinar tu personaje, pero tengo varios candidatos: '),
+                               write(Lista),
+                               write('\n ¿Quieres volver a jugar?(s/n)\n'),
+                               read(Respuesta),
+                               salir(Respuesta);
+                               write('').
+
+%Aañdir nuevo personaje y actualizar las listas
+addPersonaje(Nuevo,DatosNuevo):-[X|Y]=DatosNuevo,
+                                actualizarLista(X,Nuevo),
+                                not(Y=[]),
+                                addPersonaje(Nuevo,Y).
+                                
+actualizarLista(X,Nuevo):-lista(X,Y),Z=[Nuevo|Y],
+                          retract(lista(X,Y)),
+                          assertz(lista(X,Z)),
+                          tell('MarvelBBDD.pl'),
+                          listing(lista),
+                          told.
+
+%Terrestre
+lineaTerrestre(L,X,DatosIn,DatosOut):- write('¿Su personaje nació en la Tierra? (s/n/nose)\n'),
+        read(Terrestre),
+        lista('terrestre',T),
+        (comprobar(Terrestre)->intersection(L,T,X),DatosOut=['terrestre'|DatosIn];
+             (comprobarNoSe(Terrestre)->X=L;
+              subtract(L,T,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Femenino
+lineaFemenino(L,X,DatosIn,DatosOut):- write('¿Su personaje es femenino? (s/n/nose)\n'),
+        read(Femenino),
+        lista('femenino',F),
+        (comprobar(Femenino)->intersection(L,F,X),DatosOut=['femenino'|DatosIn];
+             (comprobarNoSe(Femenino)->X=L;
+              subtract(L,F,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Verde
+lineaVerde(L,X,DatosIn,DatosOut):- write('¿Su personaje es verde? (s/n/nose)\n'),
+        read(Verde),
+        lista('verde',V),
+        (comprobar(Verde)->intersection(L,V,X),DatosOut=['verde'|DatosIn];
+             (comprobarNoSe(Verde)->X=L;
+              subtract(L,V,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Vengador(Avenger)
+lineaVengador(L,X,DatosIn,DatosOut):- write('¿Su personaje es un vengador? (s/n/nose)\n'),
+        read(Vengador),
+        lista('vengador',A),
+        (comprobar(Vengador)->intersection(L,A,X),DatosOut=['vengador'|DatosIn];
+             (comprobarNoSe(Vengador)->X=L;
+              subtract(L,A,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Villano (Evil)
+lineaVillano(L,X,DatosIn,DatosOut):- write('¿Su personaje es un villano? (s/n/nose)\n'),
+        read(Villano),
+        lista('villano',E),
+        (comprobar(Villano)->intersection(L,E,X),DatosOut=['villano'|DatosIn];
+             (comprobarNoSe(Villano)->X=L;
+              subtract(L,E,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Mutante
+lineaMutante(L,X,DatosIn,DatosOut):- write('¿Su personaje es un mutante de nacimiento? (s/n/nose)\n'),
+        read(Mutante),
+        lista('mutante',M),
+        (comprobar(Mutante)->intersection(L,M,X),DatosOut=['mutante'|DatosIn];
+             (comprobarNoSe(Mutante)->X=L;
+              subtract(L,M,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Fantastico
+lineaFantastico(L,X,DatosIn,DatosOut):- write('¿Su personaje es uno de los 4 fantasticos? (s/n/nose)\n'),
+        read(Fantastico),
+        lista('fantastico',Fan),
+        (comprobar(Fantastico)->intersection(L,Fan,X),DatosOut=['fantastico'|DatosIn];
+             (comprobarNoSe(Fantastico)->X=L;
+              subtract(L,Fan,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Guardian
+lineaGuardian(L,X,DatosIn,DatosOut):- write('¿Su personaje es un Guardian de la Galaxia? (s/n/nose)\n'),
+        read(Guardian),
+        lista('guardian',G),
+        (comprobar(Guardian)->intersection(L,G,X),DatosOut=['guardian'|DatosIn];
+             (comprobarNoSe(Guardian)->X=L;
+              subtract(L,G,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Rojo
+lineaRojo(L,X,DatosIn,DatosOut):- write('¿Su personaje es rojo? (s/n/nose)\n'),
+        read(Rojo),
+        lista('rojo',R),
+        (comprobar(Rojo)->intersection(L,R,X),DatosOut=['rojo'|DatosIn];
+             (comprobarNoSe(Rojo)->X=L;
+              subtract(L,R,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Negro
+lineaNegro(L,X,DatosIn,DatosOut):- write('¿Su personaje es negro? (s/n/nose)\n'),
+        read(Negro),
+        lista('negro',N),
+        (comprobar(Negro)->intersection(L,N,X),DatosOut=['negro'|DatosIn];
+             (comprobarNoSe(Negro)->X=L;
+              subtract(L,N,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Animales
+lineaAnimal(L,X,DatosIn,DatosOut):- write('¿Su personaje tiene similitud con un animal? (s/n/nose)\n'),
+        read(Animales),
+        lista('animales',Ani),
+        (comprobar(Animales)->intersection(L,Ani,X),DatosOut=['animales'|DatosIn];
+             (comprobarNoSe(Animales)->X=L;
+              subtract(L,Ani,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Casco
+lineaCasco(L,X,DatosIn,DatosOut):- write('¿Su personaje tiene casco (no mascara)? (s/n/nose)\n'),
+        read(Casco),
+        lista('casco',C),
+        (comprobar(Casco)->intersection(L,C,X),DatosOut=['casco'|DatosIn];
+             (comprobarNoSe(Casco)->X=L;
+              subtract(L,C,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+%Calvo (Bald)
+lineaCalvo(L,X,DatosIn,DatosOut):- write('¿Su personaje es calvo? (s/n/nose)\n'),
+        read(Calvo),
+        lista('calvo',B),
+        (comprobar(Calvo)->intersection(L,B,X),DatosOut=['calvo'|DatosIn];
+             (comprobarNoSe(Calvo)->X=L;
+              subtract(L,B,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Capa
+lineaCapa(L,X,DatosIn,DatosOut):- write('¿Su personaje utiliza capa o gabardina? (s/n/nose)\n'),
+        read(Capa),
+        lista('capa',Ca),
+        (comprobar(Capa)->intersection(L,Ca,X),DatosOut=['capa'|DatosIn];
+             (comprobarNoSe(Capa)->X=L;
+              subtract(L,Ca,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+        
+%Armas
+lineaArmas(L,X,DatosIn,DatosOut):- write('¿Su personaje utiliza armas? (s/n/nose)\n'),
+        read(Armas),
+        lista('armas',Ar),
+        (comprobar(Armas)->intersection(L,Ar,X),DatosOut=['armas'|DatosIn];
+             (comprobarNoSe(Armas)->X=L;
+              subtract(L,Ar,X),DatosOut=DatosIn)
+        ),
+        writeln(X).
+
+        
+%Comprueba si se quiere salir
+salir(R):-comprobar(R)->jugar; write('Saliendo...'), abort.
+%Pregunta si se acierta, si lo hace pregunta si quiere salir si no continua
+
+acertar(A):-comprobar(A)-> write('\n ¿Quieres volver a jugar?(s/n)\n'),
+            read(Respuesta),
+            salir(Respuesta);
+            write('Continuan las preguntas\n').
+%Comprueba la respuesta que da el usuario
+comprobar(X):-X='s';X='Si';X='si'.
+comprobarNoSe(X):-X='nose';X='no se'.
+
+%Obtiene el primer elemento de la lista
+first(F, [F|_]).
+
+%Comprueba si ya tenemos la solucion
+solucion(X):-length(X,1)-> first(E,X),
+         write('El personaje en el que pensabas es: '),
+         write(E),
+         write('\n ¿Era el que estabas pensando?(s/n)\n'),
+         read(Acierto),
+         acertar(Acierto);
+         write('').
